@@ -24,7 +24,7 @@ use yii\helpers\Json;
  * @author Thimy Khotim <thimy.khotim@gmail.com>
  * @since 1.0
  */
-class DatetimePicker extends \yii\base\Widget
+class DatetimePicker extends \yii\jui\DatePicker
 {
     /**
      * @var string picker ID.
@@ -44,23 +44,10 @@ class DatetimePicker extends \yii\base\Widget
      */
     public $options = [];
     /**
-     * @var array the options for the underlying widget.
-     * Please refer to [jQuery UI Datepicker](http://api.jqueryui.com/datepicker/)
-     * as well as [Timepicker Addon](https://github.com/trentrichardson/jQuery-Timepicker-Addon)
-     * for possible options.
+     * @var array the HTML attributes for the picker button.
+     * @see \yii\helpers\Html::renderTagAttributes() for details on how attributes are being rendered.
      */
-    public $clientOptions = [];
-
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        parent::init();
-        if (!isset($this->options['id'])) {
-            $this->options['id'] = $this->getId();
-        }
-    }
+    public $buttons = [];
 
     /**
      * Renders the widget.
@@ -85,11 +72,12 @@ class DatetimePicker extends \yii\base\Widget
             $options = Json::htmlEncode($this->clientOptions);
             $language = Html::encode($language);
             
+            $localizeDate = '{}';
+            $localizeTime = '{}';
+            
             if ($this->dateOnly) {
                 $localizeDate = "$.datepicker.regional['{$language}']";
-                $localizeTime = null;
             } elseif ($this->timeOnly) {
-                $localizeDate = null;
                 $localizeTime = "$.timepicker.regional['{$language}']";
             }
             
@@ -110,53 +98,6 @@ class DatetimePicker extends \yii\base\Widget
         }
 
         $this->registerClientEvents($this->pickerID, $containerID);
-        WidgetAsset::register($this->getView());
-    }
-
-    /**
-     * Renders the DatetimePicker widget.
-     * @return string the rendering result.
-     */
-    protected function renderWidget()
-    {
-        $contents = [];
-
-        // get formatted date value
-        if ($this->hasModel()) {
-            $value = Html::getAttributeValue($this->model, $this->attribute);
-        } else {
-            $value = $this->value;
-        }
-        if ($value !== null && $value !== '') {
-            // format value according to dateFormat
-            try {
-                $value = Yii::$app->formatter->asDate($value, $this->dateFormat);
-            } catch(InvalidParamException $e) {
-                // ignore exception and keep original value if it is not a valid date
-            }
-        }
-        $options = $this->options;
-        $options['value'] = $value;
-
-        if ($this->inline === false) {
-            // render a text input
-            if ($this->hasModel()) {
-                $contents[] = Html::activeTextInput($this->model, $this->attribute, $options);
-            } else {
-                $contents[] = Html::textInput($this->name, $value, $options);
-            }
-        } else {
-            // render an inline datetime picker with hidden input
-            if ($this->hasModel()) {
-                $contents[] = Html::activeHiddenInput($this->model, $this->attribute, $options);
-            } else {
-                $contents[] = Html::hiddenInput($this->name, $value, $options);
-            }
-            $this->clientOptions['defaultDate'] = $value;
-            $this->clientOptions['altField'] = '#' . $this->options['id'];
-            $contents[] = Html::tag('div', null, $this->containerOptions);
-        }
-
-        return implode("\n", $contents);
+        BaseAsset::register($this->getView());
     }
 }
